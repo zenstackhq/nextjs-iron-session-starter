@@ -1,16 +1,27 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import {
-    type RequestHandlerOptions,
+import service, {
     requestHandler,
+    type RequestHandlerOptions,
 } from '@zenstackhq/runtime/server';
-import { authOptions } from '../auth/[...nextauth]';
-import { unstable_getServerSession } from 'next-auth';
-import service from '@zenstackhq/runtime';
+import { withIronSessionApiRoute } from 'iron-session/next';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { sessionOptions } from '../../../lib/session';
 
 const options: RequestHandlerOptions = {
     async getServerUser(req: NextApiRequest, res: NextApiResponse) {
-        const session = await unstable_getServerSession(req, res, authOptions);
-        return session?.user;
+        const user = req.session?.user;
+        if (!user) {
+            return undefined;
+        }
+
+        const dbUser = await service.db.user.findUnique({
+            where: { email: user.email },
+        });
+
+        return dbUser ?? undefined;
     },
 };
-export default requestHandler(service, options);
+
+export default withIronSessionApiRoute(
+    requestHandler(service, options),
+    sessionOptions
+);

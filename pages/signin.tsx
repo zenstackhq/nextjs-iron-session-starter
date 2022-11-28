@@ -1,25 +1,25 @@
-import React, { useState } from 'react';
-import Router from 'next/router';
+import { useRouter } from 'next/router';
+import React, { useContext, useState } from 'react';
 import Layout from '../components/Layout';
-import { signIn } from 'next-auth/react';
+import { UserContext } from '../lib/context';
+import { signIn } from '../lib/session';
 
 const SignIn: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const { mutateUser } = useContext(UserContext);
+    const router = useRouter();
 
     const submitData = async (e: React.SyntheticEvent) => {
         e.preventDefault();
-        const signInResult = await signIn('credentials', {
-            redirect: false,
-            email,
-            password,
-        });
-        if (signInResult?.ok) {
-            await Router.push('/');
-        } else {
+        try {
+            await signIn(email, password, mutateUser);
+        } catch (err) {
             alert(`Signin failed. Please check your email and password.`);
-            console.error('Signin failed:', signInResult?.error);
+            console.error('Signin failed:', err);
+            return;
         }
+        router.push('/');
     };
 
     return (
@@ -47,7 +47,7 @@ const SignIn: React.FC = () => {
                     <a
                         className="back"
                         href="#"
-                        onClick={() => Router.push('/')}
+                        onClick={() => router.push('/')}
                     >
                         or Cancel
                     </a>
@@ -56,7 +56,7 @@ const SignIn: React.FC = () => {
                     {"Don't have an account yet? "}
                     <a
                         className="signup"
-                        onClick={() => Router.push('/signup')}
+                        onClick={() => router.push('/signup')}
                     >
                         Signup now
                     </a>

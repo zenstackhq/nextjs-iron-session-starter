@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
+import { usePost } from '@zenstackhq/runtime/client';
+import { useRouter } from 'next/router';
+import React, { useContext, useState } from 'react';
 import Layout from '../components/Layout';
-import Router from 'next/router';
-import { usePost } from '@zenstackhq/runtime/hooks';
-import { useSession } from 'next-auth/react';
+import { UserContext } from '../lib/context';
 
 const Draft: React.FC = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
 
-    const { data: session, status } = useSession();
+    const { user, error: userLoadError } = useContext(UserContext);
     const { create } = usePost();
+    const router = useRouter();
 
-    if (status === 'loading') {
+    if (!user && !userLoadError) {
         return <p>Loading ...</p>;
-    } else if (status === 'unauthenticated') {
+    } else if (userLoadError) {
         return <p>Unauthorized</p>;
     }
 
@@ -24,10 +25,10 @@ const Draft: React.FC = () => {
                 data: {
                     title,
                     content,
-                    author: { connect: { id: session!.user.id } },
+                    author: { connect: { id: user!.id } },
                 },
             });
-            await Router.push('/drafts');
+            router.push('/drafts');
         } catch (error: any) {
             alert(`Failed to create draft: ${error.message}`);
             console.error(error);
@@ -61,7 +62,7 @@ const Draft: React.FC = () => {
                     <a
                         className="back"
                         href="#"
-                        onClick={() => Router.push('/')}
+                        onClick={() => router.push('/')}
                     >
                         or Cancel
                     </a>

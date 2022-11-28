@@ -1,29 +1,28 @@
-import React from 'react';
+import { usePost } from '@zenstackhq/runtime/client';
+import React, { useContext } from 'react';
 import Layout from '../components/Layout';
 import Post from '../components/Post';
-import { usePost } from '@zenstackhq/runtime/hooks';
-import { useSession } from 'next-auth/react';
+import { UserContext } from '../lib/context';
 
 const Blog: React.FC = () => {
-    const { data: session, status } = useSession();
+    const { user, error: userLoadError } = useContext(UserContext);
     const { find } = usePost();
-    const { data: posts } = find({
-        include: { author: true },
-        where: { published: true },
-    });
+    const { data: posts } = find(
+        {
+            include: { author: true },
+            where: { published: true },
+        },
+        { disabled: !user }
+    );
 
-    if (status === 'loading') {
+    if (!user && !userLoadError) {
         return <p>Loading ...</p>;
     }
 
     return (
         <Layout>
             <div className="page">
-                {session?.user ? (
-                    <h1>My Blog</h1>
-                ) : (
-                    <h1>Please signin first</h1>
-                )}
+                {user ? <h1>My Blog</h1> : <h1>Please signin first</h1>}
                 <main>
                     {posts?.map((post) => (
                         <div key={post.id} className="post">

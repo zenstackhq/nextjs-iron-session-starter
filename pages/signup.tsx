@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import Router from 'next/router';
+import React, { useContext, useState } from 'react';
+import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
-import { useUser } from '@zenstackhq/runtime/hooks';
-import { signIn } from 'next-auth/react';
+import { useUser } from '@zenstackhq/runtime/client';
 import { ServerErrorCode, ValidationError } from '@zenstackhq/runtime/client';
+import { signIn } from '../lib/session';
+import { UserContext } from '../lib/context';
 
 const SignUp: React.FC = () => {
     const [name, setName] = useState('');
@@ -11,6 +12,8 @@ const SignUp: React.FC = () => {
     const [password, setPassword] = useState('');
 
     const { create: signup } = useUser();
+    const { mutateUser } = useContext(UserContext);
+    const router = useRouter();
 
     const submitData = async (e: React.SyntheticEvent) => {
         e.preventDefault();
@@ -23,16 +26,14 @@ const SignUp: React.FC = () => {
                 },
             });
 
-            const signInResult = await signIn('credentials', {
-                redirect: false,
-                email,
-                password,
-            });
-            if (signInResult?.ok) {
-                await Router.push('/');
-            } else {
-                console.error('Signin failed:', signInResult?.error);
+            try {
+                await signIn(email, password, mutateUser);
+            } catch (err) {
+                console.error('Signin failed:', err);
+                return;
             }
+
+            router.push('/');
         } catch (error: any) {
             if (error instanceof ValidationError) {
                 alert(`Input data is invalid: ${error.message}`);
@@ -79,7 +80,7 @@ const SignUp: React.FC = () => {
                     <a
                         className="back"
                         href="#"
-                        onClick={() => Router.push('/')}
+                        onClick={() => router.push('/')}
                     >
                         or Cancel
                     </a>
@@ -88,7 +89,7 @@ const SignUp: React.FC = () => {
                     Already have an account?{' '}
                     <a
                         className="signin"
-                        onClick={() => Router.push('/signin')}
+                        onClick={() => router.push('/signin')}
                     >
                         Signin now
                     </a>

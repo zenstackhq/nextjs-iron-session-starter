@@ -1,14 +1,20 @@
-import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { signOut, useSession } from 'next-auth/react';
+import React, { useContext } from 'react';
+import { UserContext } from '../lib/context';
+import { signOut } from '../lib/session';
 
 const Header: React.FC = () => {
     const router = useRouter();
     const isActive: (pathname: string) => boolean = (pathname) =>
         router.pathname === pathname;
 
-    const { status } = useSession();
+    const { user, mutateUser } = useContext(UserContext);
+
+    const onSignout = async () => {
+        await signOut(mutateUser);
+        router.push('/');
+    };
 
     return (
         <nav>
@@ -22,19 +28,23 @@ const Header: React.FC = () => {
                     <a data-active={isActive('/drafts')}>Drafts</a>
                 </Link>
             </div>
+
             <div className="right">
-                {status === 'authenticated' && (
-                    <a onClick={() => signOut({ callbackUrl: '/' })}>Signout</a>
-                )}
-                {status === 'unauthenticated' && (
+                {user ? (
+                    <a onClick={onSignout}>Signout</a>
+                ) : (
                     <Link href="/signin">
                         <a>Signin</a>
                     </Link>
                 )}
-                <Link href="/create">
-                    <a data-active={isActive('/create')}>+ Create draft</a>
-                </Link>
+
+                {user && (
+                    <Link href="/create">
+                        <a data-active={isActive('/create')}>+ Create draft</a>
+                    </Link>
+                )}
             </div>
+
             <style jsx>{`
                 nav {
                     display: flex;

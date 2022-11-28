@@ -1,9 +1,9 @@
 /* eslint-disable react/no-children-prop */
+import { usePost } from '@zenstackhq/runtime/client';
+import { useRouter } from 'next/router';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import Layout from '../../components/Layout';
-import { useRouter } from 'next/router';
-import { usePost } from '@zenstackhq/runtime/hooks';
 
 const Post: React.FC = () => {
     const { get, update, del } = usePost();
