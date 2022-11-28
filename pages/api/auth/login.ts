@@ -22,8 +22,6 @@ const loginRoute: NextApiHandler<AuthResponseType> = async (req, res) => {
     req.session.user = user;
     await req.session.save();
 
-    console.log('Login succeeded, session saved');
-
     res.json(user);
 };
 
